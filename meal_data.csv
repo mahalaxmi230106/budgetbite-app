@@ -1,0 +1,51 @@
+Restaurant_Name,Dish_Name,Price,Cuisine,Veg_NonVeg,Rating,Distance_km
+Udupi Cafe,Masala Dosa,50,South Indian,Veg,4.5,0.3
+Udupi Cafe,Idli Vada,40,South Indian,Veg,4.5,0.3
+Udupi Cafe,Plain Dosa,45,South Indian,Veg,4.5,0.3
+Udupi Cafe,Upma,35,South Indian,Veg,4.3,0.3
+Udupi Cafe,Pongal,40,South Indian,Veg,4.4,0.3
+Biryani Point,Veg Fried Rice,80,Chinese,Veg,4.2,0.5
+Biryani Point,Chicken Biryani,150,Indian,Non-Veg,4.6,0.5
+Biryani Point,Egg Fried Rice,70,Chinese,Veg,4.1,0.5
+Biryani Point,Veg Biryani,120,Indian,Veg,4.4,0.5
+Biryani Point,Paneer Fried Rice,90,Chinese,Veg,4.3,0.5
+Santosh Dhaba,Veg Thali,60,North Indian,Veg,4.0,0.8
+Santosh Dhaba,Roti Sabji,50,North Indian,Veg,3.9,0.8
+Santosh Dhaba,Dal Tadka,45,North Indian,Veg,4.1,0.8
+Santosh Dhaba,Paneer Curry,100,North Indian,Veg,4.2,0.8
+Santosh Dhaba,Chole Bhature,80,North Indian,Veg,4.3,0.8
+China Town,Chicken Fried Rice,100,Chinese,Non-Veg,4.3,0.6
+China Town,Veg Noodles,70,Chinese,Veg,4.2,0.6
+China Town,Manchurian,60,Chinese,Veg,4.1,0.6
+China Town,Spring Rolls,50,Chinese,Veg,3.9,0.6
+China Town,Hakka Noodles,75,Chinese,Veg,4.2,0.6
+Annapurna,Meals,70,South Indian,Veg,4.1,0.4
+Annapurna,Sambar Rice,50,South Indian,Veg,4.0,0.4
+Annapurna,Curd Rice,40,South Indian,Veg,4.2,0.4
+Annapurna,Lemon Rice,45,South Indian,Veg,4.1,0.4
+Annapurna,Tamarind Rice,50,South Indian,Veg,4.0,0.4
+Paradise Biryani,Chicken Biryani,180,Indian,Non-Veg,4.7,1.2
+Paradise Biryani,Mutton Biryani,220,Indian,Non-Veg,4.8,1.2
+Paradise Biryani,Veg Biryani,140,Indian,Veg,4.5,1.2
+Paradise Biryani,Egg Biryani,160,Indian,Non-Veg,4.6,1.2
+Paradise Biryani,Family Pack Biryani,200,Indian,Non-Veg,4.7,1.2
+Green Leaf,Green Salad,40,Healthy,Veg,4.0,0.7
+Green Leaf,Sprout Salad,50,Healthy,Veg,4.1,0.7
+Green Leaf,Fruit Salad,60,Healthy,Veg,4.2,0.7
+Green Leaf,Soup,30,Healthy,Veg,3.8,0.7
+Green Leaf,Sandwich,50,Continental,Veg,4.0,0.7
+Spice Garden,Chicken Curry,120,Indian,Non-Veg,4.3,1.0
+Spice Garden,Fish Fry,140,Indian,Non-Veg,4.4,1.0
+Spice Garden,Mutton Curry,180,Indian,Non-Veg,4.3,1.0
+Spice Garden,Dal Fry,60,North Indian,Veg,4.2,1.0
+Spice Garden,Jeera Rice,50,North Indian,Veg,4.1,1.0
+Mumbai Xpress,Pav Bhaji,70,Street Food,Veg,4.0,0.5
+Mumbai Xpress,Vada Pav,30,Street Food,Veg,3.9,0.5
+Mumbai Xpress,Misal Pav,60,Street Food,Veg,4.1,0.5
+Mumbai Xpress,Bhel Puri,40,Street Food,Veg,3.8,0.5
+Mumbai Xpress,Dahi Puri,45,Street Food,Veg,3.9,0.5
+Bawarchi,Chicken 65,100,Indian,Non-Veg,4.4,1.1
+Bawarchi,Tandoori Chicken,150,Indian,Non-Veg,4.5,1.1
+Bawarchi,Biryani,170,Indian,Non-Veg,4.6,1.1
+Bawarchi,Kebab,120,Indian,Non-Veg,4.3,1.1
+Bawarchi,Fry Piece,90,Indian,Non-Veg,4.2,1.1
