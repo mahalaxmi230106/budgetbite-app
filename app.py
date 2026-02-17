@@ -48,7 +48,7 @@ st.markdown("<h1 style='text-align: center; color: #FF6B6B;'>🍽️ BudgetBite 
 st.markdown("<p style='text-align: center; font-size: 18px;'>AI-Powered Smart Meal Recommender</p>", unsafe_allow_html=True)
 
 # Sidebar
-st.sidebar.image("https://via.placeholder.com/300x100/FF6B6B/FFFFFF?text=BudgetBite", use_container_width=True)
+st.sidebar.image("https://via.placeholder.com/300x100/FF6B6B/FFFFFF?text=BudgetBite", use_column_width=True)
 st.sidebar.header("⚙️ Preferences")
 budget = st.sidebar.slider("💰 Budget (Rs.)", 30, 250, 100)
 veg_pref = st.sidebar.selectbox("🥗 Diet", ["Any", "Veg", "Non-Veg"])
@@ -346,3 +346,4 @@ st.markdown("""
     🍽️ BudgetBite Pro - Powered by Machine Learning | Built with Python, Streamlit & Scikit-learn
 </p>
 """, unsafe_allow_html=True)
+
