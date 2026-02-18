@@ -1,11 +1,9 @@
 import streamlit as st
 import pandas as pd
-import plotly.express as px
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import urllib.parse
 import math
-from streamlit.components.v1 import html
 
 # ===================== PAGE CONFIG =====================
 st.set_page_config(
@@ -20,8 +18,6 @@ if 'favorites' not in st.session_state:
     st.session_state.favorites = []
 if 'search_clicked' not in st.session_state:
     st.session_state.search_clicked = False
-if 'user_location' not in st.session_state:
-    st.session_state.user_location = None
 
 # ===================== CALCULATE DISTANCE =====================
 def calculate_distance(lat1, lon1, lat2, lon2):
@@ -32,84 +28,6 @@ def calculate_distance(lat1, lon1, lat2, lon2):
     a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
     c = 2 * math.asin(math.sqrt(a))
     return R * c
-
-# ===================== AUTO-DETECT LOCATION =====================
-def get_user_location():
-    """JavaScript to get user's GPS location"""
-    location_script = """
-    <script>
-    function getLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(showPosition, showError);
-        } else {
-            alert("Geolocation is not supported by this browser.");
-        }
-    }
-    
-    function showPosition(position) {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        
-        // Send location to Streamlit
-        window.parent.postMessage({
-            type: 'streamlit:setComponentValue',
-            value: {latitude: lat, longitude: lon}
-        }, '*');
-        
-        // Also update the display
-        document.getElementById('location-status').innerHTML = 
-            '<div style="background: #28a745; color: white; padding: 15px; border-radius: 10px; text-align: center;">' +
-            '<strong>✅ Location Detected!</strong><br>' +
-            'Lat: ' + lat.toFixed(4) + ', Lon: ' + lon.toFixed(4) +
-            '</div>';
-    }
-    
-    function showError(error) {
-        let msg = '';
-        switch(error.code) {
-            case error.PERMISSION_DENIED:
-                msg = "Please allow location access in your browser settings.";
-                break;
-            case error.POSITION_UNAVAILABLE:
-                msg = "Location information is unavailable.";
-                break;
-            case error.TIMEOUT:
-                msg = "Location request timed out.";
-                break;
-            default:
-                msg = "An unknown error occurred.";
-        }
-        document.getElementById('location-status').innerHTML = 
-            '<div style="background: #dc3545; color: white; padding: 15px; border-radius: 10px; text-align: center;">' +
-            '❌ ' + msg +
-            '</div>';
-    }
-    
-    // Auto-detect on load
-    getLocation();
-    </script>
-    
-    <div id="location-status" style="margin: 20px 0;">
-        <div style="background: #17a2b8; color: white; padding: 15px; border-radius: 10px; text-align: center;">
-            📍 Detecting your location...
-        </div>
-    </div>
-    <button onclick="getLocation()" style="
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        padding: 15px 30px;
-        border: none;
-        border-radius: 50px;
-        font-weight: 700;
-        font-size: 1rem;
-        cursor: pointer;
-        width: 100%;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    ">
-        🔄 Refresh Location
-    </button>
-    """
-    return location_script
 
 # ===================== PROFESSIONAL CSS =====================
 st.markdown("""
@@ -177,6 +95,17 @@ st.markdown("""
         margin-bottom: 25px;
         color: white;
     }
+    
+    .location-box {
+        background: linear-gradient(135deg, #28a745, #20c997);
+        color: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin: 15px 0;
+        text-align: center;
+        font-weight: 600;
+        box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
+    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -225,7 +154,7 @@ st.markdown("""
     <p class="header-subtitle">AI-Powered Meal Discovery with GPS Navigation</p>
     <div class="feature-badges">
         <span class="feature-badge">🤖 ML Powered</span>
-        <span class="feature-badge">📍 Auto GPS</span>
+        <span class="feature-badge">📍 GPS Enabled</span>
         <span class="feature-badge">🗺️ Live Directions</span>
         <span class="feature-badge">💰 Budget First</span>
     </div>
@@ -241,13 +170,14 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    # AUTO GPS DETECTION
-    st.markdown("### 📍 Auto-Detect Location")
+    st.markdown("### 📍 Your Location")
     
-    # Embed GPS detection script
-    html(get_user_location(), height=150)
-    
-    st.info("💡 **Or enter manually:**")
+    # Simple location input with get location button
+    st.info("💡 **How to get your GPS coordinates:**\n\n"
+            "1. Open **Google Maps** on your phone/computer\n"
+            "2. Long-press your current location\n"
+            "3. Copy the coordinates shown\n"
+            "4. Paste them below!")
     
     col1, col2 = st.columns(2)
     with col1:
@@ -255,8 +185,28 @@ with st.sidebar:
     with col2:
         user_lon = st.number_input("Longitude", value=78.4800, format="%.4f", step=0.0001, key="lon")
     
-    if user_lat and user_lon:
-        st.session_state.user_location = (user_lat, user_lon)
+    # Show current location
+    st.markdown(f"""
+    <div class="location-box">
+        📍 Your Location:<br>
+        <strong>{user_lat:.4f}, {user_lon:.4f}</strong>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    # Quick location presets for testing
+    with st.expander("📌 Quick Location Presets"):
+        if st.button("📍 Hyderabad City Center"):
+            st.session_state.lat = 17.4400
+            st.session_state.lon = 78.4800
+            st.rerun()
+        if st.button("📍 Charminar"):
+            st.session_state.lat = 17.3616
+            st.session_state.lon = 78.4747
+            st.rerun()
+        if st.button("📍 Hitech City"):
+            st.session_state.lat = 17.4435
+            st.session_state.lon = 78.3772
+            st.rerun()
     
     st.markdown("---")
     st.markdown("### 🔍 Search Preferences")
@@ -281,8 +231,7 @@ with st.sidebar:
         st.metric("🏪 Restaurants", df["Restaurant_Name"].nunique())
 
 # ===================== MAIN CONTENT =====================
-if st.session_state.search_clicked and st.session_state.user_location:
-    user_lat, user_lon = st.session_state.user_location
+if st.session_state.search_clicked:
     
     df['Actual_Distance'] = df.apply(
         lambda row: calculate_distance(user_lat, user_lon, row['Latitude'], row['Longitude']), axis=1
@@ -331,12 +280,15 @@ if st.session_state.search_clicked and st.session_state.user_location:
             st.metric("⭐ Best Rating", f"{filtered['Rating'].max():.1f}")
         
         st.success(f"✅ Found {len(top_results)} meals near you!")
+        st.info(f"📍 Searching from: {user_lat:.4f}, {user_lon:.4f}")
         st.markdown("---")
         
         for idx, row in top_results.iterrows():
             veg_icon = "🟢" if row['Veg_NonVeg'] == 'Veg' else "🔴"
             
+            # CORRECTED: Using the actual user_lat and user_lon from the number inputs
             directions_url = f"https://www.google.com/maps/dir/?api=1&origin={user_lat},{user_lon}&destination={row['Latitude']},{row['Longitude']}&travelmode=driving"
+            
             msg = f"🍽️ Found on BudgetBite!\n\n*{row['Dish_Name']}*\n🏪 {row['Restaurant_Name']}\n💰 Rs.{row['Price']}\n⭐ {row['Rating']}\n📍 {row['Actual_Distance']:.1f}km away"
             whatsapp_url = f"https://wa.me/?text={urllib.parse.quote(msg)}"
             
@@ -359,10 +311,41 @@ if st.session_state.search_clicked and st.session_state.user_location:
                     st.link_button("🗺️ GET DIRECTIONS", directions_url, use_container_width=True)
                 with col2:
                     st.link_button("📱 SHARE", whatsapp_url, use_container_width=True)
+                
+                # Show exact coordinates for debugging
+                with st.expander("📍 Location Details"):
+                    st.write(f"**Your Location:** {user_lat:.6f}, {user_lon:.6f}")
+                    st.write(f"**Restaurant Location:** {row['Latitude']:.6f}, {row['Longitude']:.6f}")
+                    st.write(f"**Calculated Distance:** {row['Actual_Distance']:.2f} km")
+                
                 st.markdown("---")
 
 else:
-    st.info("👆 Allow location access or enter coordinates in the sidebar, then click **'FIND MEALS'**!")
+    st.info("👆 Enter your GPS coordinates in the sidebar and click **'FIND MEALS'**!")
+    
+    st.markdown("### 🗺️ How to Get Your GPS Coordinates:")
+    
+    col1, col2 = st.columns(2)
+    with col1:
+        st.markdown("""
+        **📱 On Mobile (Google Maps):**
+        1. Open Google Maps app
+        2. Long-press your location
+        3. Coordinates appear at the top
+        4. Tap to copy
+        5. Paste in the sidebar!
+        """)
+    with col2:
+        st.markdown("""
+        **💻 On Computer (Google Maps):**
+        1. Open maps.google.com
+        2. Right-click your location
+        3. Click the coordinates
+        4. They're copied automatically!
+        5. Paste in the sidebar!
+        """)
+    
+    st.markdown("---")
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -379,6 +362,7 @@ st.markdown("""
 <div style='text-align: center; padding: 40px; background: linear-gradient(135deg, #667eea, #764ba2);
             border-radius: 25px; color: white;'>
     <h2 style='margin: 0; font-size: 2rem; font-weight: 900;'>🍽️ BudgetBite Pro</h2>
-    <p style='margin: 15px 0 0; font-size: 1.1rem;'>AI-Powered Meal Discovery with Auto GPS</p>
+    <p style='margin: 15px 0 0; font-size: 1.1rem;'>AI-Powered Meal Discovery with GPS Navigation</p>
+    <p style='margin: 5px 0 0; opacity: 0.85;'>TF-IDF ML | Real-time GPS | Smart Recommendations</p>
 </div>
 """, unsafe_allow_html=True)
