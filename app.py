@@ -18,8 +18,6 @@ st.set_page_config(
 # ===================== SESSION STATE =====================
 if 'favorites' not in st.session_state:
     st.session_state.favorites = []
-if 'dark_mode' not in st.session_state:
-    st.session_state.dark_mode = False
 if 'search_clicked' not in st.session_state:
     st.session_state.search_clicked = False
 if 'user_location' not in st.session_state:
@@ -53,17 +51,6 @@ st.markdown("""
         background-attachment: fixed;
     }
     
-    /* GLASS MORPHISM EFFECTS */
-    .glass-card {
-        background: rgba(255, 255, 255, 0.95);
-        backdrop-filter: blur(10px);
-        border-radius: 20px;
-        border: 1px solid rgba(255, 255, 255, 0.3);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
-        padding: 30px;
-        margin: 20px 0;
-    }
-    
     /* MODERN HEADER */
     .modern-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -73,24 +60,6 @@ st.markdown("""
         color: white;
         margin-bottom: 40px;
         box-shadow: 0 20px 60px rgba(102, 126, 234, 0.4);
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .modern-header::before {
-        content: '';
-        position: absolute;
-        top: -50%;
-        right: -50%;
-        width: 200%;
-        height: 200%;
-        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
-        animation: pulse 4s ease-in-out infinite;
-    }
-    
-    @keyframes pulse {
-        0%, 100% { transform: scale(1); opacity: 0.5; }
-        50% { transform: scale(1.1); opacity: 0.8; }
     }
     
     .header-title {
@@ -98,8 +67,6 @@ st.markdown("""
         font-weight: 900;
         margin: 0;
         text-shadow: 0 4px 20px rgba(0,0,0,0.2);
-        position: relative;
-        z-index: 1;
     }
     
     .header-subtitle {
@@ -107,8 +74,6 @@ st.markdown("""
         margin-top: 15px;
         opacity: 0.95;
         font-weight: 500;
-        position: relative;
-        z-index: 1;
     }
     
     .feature-badges {
@@ -117,8 +82,6 @@ st.markdown("""
         gap: 15px;
         margin-top: 25px;
         flex-wrap: wrap;
-        position: relative;
-        z-index: 1;
     }
     
     .feature-badge {
@@ -129,213 +92,6 @@ st.markdown("""
         font-size: 0.9rem;
         border: 1px solid rgba(255, 255, 255, 0.3);
         backdrop-filter: blur(10px);
-    }
-    
-    /* PROFESSIONAL DISH CARDS */
-    .pro-dish-card {
-        background: white;
-        border-radius: 20px;
-        padding: 30px;
-        margin: 20px 0;
-        box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
-        border-left: 6px solid #667eea;
-        transition: all 0.3s ease;
-        position: relative;
-        overflow: hidden;
-    }
-    
-    .pro-dish-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 20px 60px rgba(0, 0, 0, 0.15);
-    }
-    
-    .dish-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-start;
-        margin-bottom: 20px;
-    }
-    
-    .dish-title {
-        font-size: 1.8rem;
-        font-weight: 800;
-        color: #2d3436;
-        margin: 0;
-    }
-    
-    .dish-rank-badge {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        width: 50px;
-        height: 50px;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: 900;
-        font-size: 1.3rem;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-    }
-    
-    .restaurant-name {
-        font-size: 1.1rem;
-        color: #667eea;
-        font-weight: 700;
-        margin: 5px 0 15px;
-    }
-    
-    .dish-info-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin: 20px 0;
-    }
-    
-    .info-box {
-        text-align: center;
-        padding: 15px;
-        background: #f8f9fa;
-        border-radius: 15px;
-    }
-    
-    .info-value {
-        font-size: 1.5rem;
-        font-weight: 800;
-        color: #667eea;
-        margin-bottom: 5px;
-    }
-    
-    .info-label {
-        font-size: 0.75rem;
-        color: #6c757d;
-        font-weight: 600;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .tag-container {
-        display: flex;
-        gap: 10px;
-        margin: 15px 0;
-        flex-wrap: wrap;
-    }
-    
-    .dish-tag {
-        padding: 6px 16px;
-        border-radius: 20px;
-        font-size: 0.8rem;
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-    
-    .tag-veg {
-        background: #d4edda;
-        color: #155724;
-    }
-    
-    .tag-nonveg {
-        background: #f8d7da;
-        color: #721c24;
-    }
-    
-    .tag-cuisine {
-        background: #cce5ff;
-        color: #004085;
-    }
-    
-    /* GPS LOCATION BUTTON */
-    .gps-button {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        padding: 15px 30px;
-        border-radius: 50px;
-        font-weight: 700;
-        font-size: 1rem;
-        border: none;
-        cursor: pointer;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
-        transition: all 0.3s ease;
-        width: 100%;
-        margin: 10px 0;
-    }
-    
-    .gps-button:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
-    }
-    
-    /* DIRECTIONS BUTTON */
-    .directions-btn {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white !important;
-        padding: 12px 25px;
-        border-radius: 50px;
-        text-decoration: none !important;
-        font-weight: 700;
-        font-size: 0.95rem;
-        display: inline-block;
-        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
-        transition: all 0.3s ease;
-        margin: 10px 5px;
-    }
-    
-    .directions-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(102, 126, 234, 0.5);
-    }
-    
-    .whatsapp-btn {
-        background: linear-gradient(135deg, #25D366, #128C7E);
-        color: white !important;
-        padding: 12px 25px;
-        border-radius: 50px;
-        text-decoration: none !important;
-        font-weight: 700;
-        font-size: 0.95rem;
-        display: inline-block;
-        box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3);
-        transition: all 0.3s ease;
-        margin: 10px 5px;
-    }
-    
-    .whatsapp-btn:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 6px 20px rgba(37, 211, 102, 0.5);
-    }
-    
-    /* STATS CARDS */
-    .stats-grid {
-        display: grid;
-        grid-template-columns: repeat(4, 1fr);
-        gap: 20px;
-        margin: 30px 0;
-    }
-    
-    .stat-card {
-        background: white;
-        padding: 25px;
-        border-radius: 20px;
-        text-align: center;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-        border-top: 4px solid #667eea;
-    }
-    
-    .stat-number {
-        font-size: 2.5rem;
-        font-weight: 900;
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        -webkit-background-clip: text;
-        -webkit-text-fill-color: transparent;
-    }
-    
-    .stat-label {
-        font-size: 0.9rem;
-        color: #6c757d;
-        font-weight: 600;
-        margin-top: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
     }
     
     /* LOCATION INFO */
@@ -374,21 +130,6 @@ st.markdown("""
         margin-top: 8px;
         opacity: 0.95;
     }
-    
-    /* NO RESULTS */
-    .no-results {
-        text-align: center;
-        padding: 60px 40px;
-        background: white;
-        border-radius: 20px;
-        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
-    }
-    
-    .no-results h2 {
-        font-size: 2rem;
-        color: #2d3436;
-        margin-bottom: 15px;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -396,7 +137,7 @@ st.markdown("""
 @st.cache_data
 def load_data():
     df = pd.read_csv("meal_data.csv")
-    # Add GPS coordinates for restaurants (sample data - you can update with real coordinates)
+    # Add GPS coordinates for restaurants
     restaurant_coords = {
         'Hotel Shadab': (17.4435, 78.4728),
         'Paradise Restaurant': (17.4402, 78.4483),
@@ -464,7 +205,6 @@ with st.sidebar:
     # GPS LOCATION
     st.markdown("### 📍 Your Location")
     
-    # Manual location input
     col1, col2 = st.columns(2)
     with col1:
         user_lat = st.number_input("Latitude", value=17.4400, format="%.4f", step=0.0001)
@@ -480,7 +220,7 @@ with st.sidebar:
     </div>
     """, unsafe_allow_html=True)
     
-    st.info("💡 **Tip:** You can manually enter your GPS coordinates or use your device's location services!")
+    st.info("💡 **Tip:** Enter your GPS coordinates for accurate results!")
     
     st.markdown("---")
     st.markdown("### 🔍 Search Preferences")
@@ -515,7 +255,7 @@ with st.sidebar:
 if st.session_state.search_clicked and st.session_state.user_location:
     user_lat, user_lon = st.session_state.user_location
     
-    # Calculate actual distances from user location
+    # Calculate actual distances
     df['Actual_Distance'] = df.apply(
         lambda row: calculate_distance(user_lat, user_lon, row['Latitude'], row['Longitude']),
         axis=1
@@ -533,12 +273,7 @@ if st.session_state.search_clicked and st.session_state.user_location:
         filtered = filtered[filtered["Dish_Name"].str.contains(search_query, case=False, na=False)]
     
     if len(filtered) == 0:
-        st.markdown("""
-        <div class="no-results">
-            <h2>😞 No meals found nearby!</h2>
-            <p>Try increasing your distance or adjusting filters</p>
-        </div>
-        """, unsafe_allow_html=True)
+        st.error("😞 No meals found nearby! Try increasing your distance or adjusting filters.")
     else:
         # Scoring
         filtered["rating_score"] = filtered["Rating"] / 5.0
@@ -564,113 +299,68 @@ if st.session_state.search_clicked and st.session_state.user_location:
         top_results = filtered.head(20).reset_index(drop=True)
         
         # Stats
-        st.markdown(f"""
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number">{len(filtered)}</div>
-                <div class="stat-label">Total Matches</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">{top_results['Actual_Distance'].min():.1f}km</div>
-                <div class="stat-label">Nearest</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">Rs.{filtered['Price'].min()}</div>
-                <div class="stat-label">Lowest Price</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">⭐{filtered['Rating'].max():.1f}</div>
-                <div class="stat-label">Best Rating</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
+        col1, col2, col3, col4 = st.columns(4)
+        with col1:
+            st.metric("🍽️ Total Matches", len(filtered))
+        with col2:
+            st.metric("📍 Nearest", f"{top_results['Actual_Distance'].min():.1f}km")
+        with col3:
+            st.metric("💰 Lowest Price", f"Rs.{filtered['Price'].min()}")
+        with col4:
+            st.metric("⭐ Best Rating", f"{filtered['Rating'].max():.1f}")
         
         st.success(f"✅ Found {len(top_results)} meals near you!")
+        st.markdown("---")
         
-        # Display results
+        # Display results using Streamlit components
         for idx, row in top_results.iterrows():
             veg_icon = "🟢" if row['Veg_NonVeg'] == 'Veg' else "🔴"
-            veg_class = "tag-veg" if row['Veg_NonVeg'] == 'Veg' else "tag-nonveg"
             
-            # Google Maps directions URL
+            # Directions URL
             directions_url = f"https://www.google.com/maps/dir/?api=1&origin={user_lat},{user_lon}&destination={row['Latitude']},{row['Longitude']}&travelmode=driving"
             
-            # WhatsApp share
+            # WhatsApp
             msg = f"🍽️ Found on BudgetBite!\n\n*{row['Dish_Name']}*\n🏪 {row['Restaurant_Name']}\n💰 Rs.{row['Price']}\n⭐ {row['Rating']}\n📍 {row['Actual_Distance']:.1f}km away"
             whatsapp_url = f"https://wa.me/?text={urllib.parse.quote(msg)}"
             
-            st.markdown(f"""
-            <div class="pro-dish-card">
-                <div class="dish-header">
-                    <div>
-                        <h2 class="dish-title">{veg_icon} {row['Dish_Name']}</h2>
-                        <p class="restaurant-name">🏪 {row['Restaurant_Name']}</p>
-                        <div class="tag-container">
-                            <span class="dish-tag {veg_class}">{row['Veg_NonVeg']}</span>
-                            <span class="dish-tag tag-cuisine">{row['Cuisine']}</span>
-                        </div>
-                    </div>
-                    <div class="dish-rank-badge">{idx+1}</div>
-                </div>
+            # Create card using columns
+            with st.container():
+                st.markdown(f"### {idx+1}. {veg_icon} {row['Dish_Name']}")
+                st.caption(f"🏪 **{row['Restaurant_Name']}** | {row['Veg_NonVeg']} | {row['Cuisine']}")
                 
-                <div class="dish-info-grid">
-                    <div class="info-box">
-                        <div class="info-value">Rs.{row['Price']}</div>
-                        <div class="info-label">💰 Price</div>
-                    </div>
-                    <div class="info-box">
-                        <div class="info-value">⭐{row['Rating']}</div>
-                        <div class="info-label">🏆 Rating</div>
-                    </div>
-                    <div class="info-box">
-                        <div class="info-value">{row['Actual_Distance']:.1f}km</div>
-                        <div class="info-label">📍 Distance</div>
-                    </div>
-                    <div class="info-box">
-                        <div class="info-value">{row['final_score']:.2f}</div>
-                        <div class="info-label">🎯 Score</div>
-                    </div>
-                </div>
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.metric("💰 Price", f"Rs.{row['Price']}")
+                with col2:
+                    st.metric("⭐ Rating", f"{row['Rating']}")
+                with col3:
+                    st.metric("📍 Distance", f"{row['Actual_Distance']:.1f}km")
+                with col4:
+                    st.metric("🎯 Score", f"{row['final_score']:.2f}")
                 
-                <div style="margin-top: 20px;">
-                    <a href="{directions_url}" target="_blank" class="directions-btn">
-                        🗺️ GET DIRECTIONS
-                    </a>
-                    <a href="{whatsapp_url}" target="_blank" class="whatsapp-btn">
-                        📱 SHARE
-                    </a>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
+                col1, col2 = st.columns(2)
+                with col1:
+                    st.link_button("🗺️ GET DIRECTIONS", directions_url, use_container_width=True)
+                with col2:
+                    st.link_button("📱 SHARE ON WHATSAPP", whatsapp_url, use_container_width=True)
+                
+                st.markdown("---")
 
 else:
-    st.markdown("""
-    <div class="glass-card" style="text-align: center;">
-        <h2>👆 Enter your location and preferences</h2>
-        <p style="font-size: 1.1rem; color: #6c757d;">Fill in the sidebar and click <strong>'FIND MEALS'</strong> to discover nearby restaurants!</p>
-        <br>
-        <div class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-number">{}</div>
-                <div class="stat-label">Total Dishes</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">{}</div>
-                <div class="stat-label">Restaurants</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">⭐{:.1f}</div>
-                <div class="stat-label">Avg Rating</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-number">Rs.{}</div>
-                <div class="stat-label">Avg Price</div>
-            </div>
-        </div>
-    </div>
-    """.format(len(df), df['Restaurant_Name'].nunique(), df['Rating'].mean(), int(df['Price'].mean())), unsafe_allow_html=True)
+    st.info("👆 Enter your GPS location and preferences in the sidebar, then click **'FIND MEALS'**!")
+    
+    col1, col2, col3, col4 = st.columns(4)
+    with col1:
+        st.metric("🍽️ Total Dishes", len(df))
+    with col2:
+        st.metric("🏪 Restaurants", df['Restaurant_Name'].nunique())
+    with col3:
+        st.metric("⭐ Avg Rating", f"{df['Rating'].mean():.1f}")
+    with col4:
+        st.metric("💰 Avg Price", f"Rs.{int(df['Price'].mean())}")
 
 # ===================== FOOTER =====================
+st.markdown("---")
 st.markdown("""
 <div style='text-align: center; padding: 40px; margin-top: 50px;
             background: linear-gradient(135deg, #667eea, #764ba2);
