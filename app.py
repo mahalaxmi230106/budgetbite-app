@@ -14,10 +14,15 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ===================== DARK MODE + CSS =====================
+# ===================== SESSION STATE =====================
+if 'favorites' not in st.session_state:
+    st.session_state.favorites = []
 if 'dark_mode' not in st.session_state:
     st.session_state.dark_mode = False
+if 'search_clicked' not in st.session_state:
+    st.session_state.search_clicked = False
 
+# ===================== DARK MODE + CSS =====================
 if st.session_state.dark_mode:
     bg_color = "#1a1a2e"
     card_bg = "#16213e"
@@ -80,12 +85,6 @@ st.markdown(f"""
     @keyframes fadeInUp {{
         from {{ opacity: 0; transform: translateY(30px); }}
         to {{ opacity: 1; transform: translateY(0); }}
-    }}
-
-    @keyframes pulse {{
-        0% {{ transform: scale(1); }}
-        50% {{ transform: scale(1.05); }}
-        100% {{ transform: scale(1); }}
     }}
 
     @keyframes slideIn {{
@@ -319,26 +318,6 @@ st.markdown(f"""
         background: {sidebar_bg} !important;
     }}
 
-    /* DARK MODE TOGGLE */
-    .dark-toggle {{
-        position: fixed;
-        top: 70px;
-        right: 20px;
-        z-index: 999;
-    }}
-
-    /* TABS */
-    .stTabs [data-baseweb="tab-list"] {{
-        gap: 5px;
-        background: transparent;
-    }}
-
-    .stTabs [data-baseweb="tab"] {{
-        border-radius: 10px;
-        padding: 10px 20px;
-        font-weight: 600;
-    }}
-
     /* NO RESULTS */
     .no-results {{
         text-align: center;
@@ -346,6 +325,14 @@ st.markdown(f"""
         background: {card_bg};
         border-radius: 20px;
         box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+    }}
+
+    /* INPUT BOX STYLING */
+    .stTextInput input, .stNumberInput input {{
+        border-radius: 10px !important;
+        border: 2px solid #FF6B6B !important;
+        padding: 10px !important;
+        font-size: 1rem !important;
     }}
 </style>
 """, unsafe_allow_html=True)
@@ -373,12 +360,6 @@ def build_ml_model(df):
 
 tfidf_matrix, cosine_sim = build_ml_model(df)
 
-# ===================== SESSION STATE =====================
-if 'favorites' not in st.session_state:
-    st.session_state.favorites = []
-if 'dark_mode' not in st.session_state:
-    st.session_state.dark_mode = False
-
 # ===================== HERO BANNER =====================
 st.markdown("""
 <div class="hero-banner">
@@ -394,7 +375,7 @@ st.markdown("""
 </div>
 """, unsafe_allow_html=True)
 
-# ===================== SIDEBAR =====================
+# ===================== SIDEBAR INPUT FORM =====================
 with st.sidebar:
     st.markdown("""
     <div style='background: linear-gradient(135deg, #FF6B6B, #FF8E53); 
@@ -411,13 +392,60 @@ with st.sidebar:
         st.rerun()
 
     st.markdown("---")
-    st.markdown("### ⚙️ Filters")
+    st.markdown("### 🔍 Search Your Meal")
 
-    budget = st.slider("💰 Budget (Rs.)", 30, 300, 100)
-    veg_pref = st.selectbox("🥗 Diet Preference", ["Any", "Veg", "Non-Veg"])
-    cuisine_pref = st.selectbox("🍜 Cuisine Type", ["Any"] + sorted(df["Cuisine"].unique().tolist()))
-    max_distance = st.slider("📍 Max Distance (km)", 0.0, 3.0, 2.0, 0.1)
-    sort_by = st.selectbox("🔃 Sort Results By", ["Best Match", "Price (Low to High)", "Price (High to Low)", "Rating (High to Low)", "Distance (Nearest)"])
+    # User Input Form
+    with st.form("meal_search_form"):
+        budget_input = st.number_input(
+            "💰 Enter Your Budget (Rs.)",
+            min_value=20,
+            max_value=500,
+            value=100,
+            step=10,
+            help="Enter your maximum budget for a meal"
+        )
+
+        veg_pref = st.selectbox(
+            "🥗 Diet Preference",
+            ["Any", "Veg", "Non-Veg"],
+            help="Select your dietary preference"
+        )
+
+        cuisine_pref = st.selectbox(
+            "🍜 Cuisine Type",
+            ["Any"] + sorted(df["Cuisine"].unique().tolist()),
+            help="Select your preferred cuisine"
+        )
+
+        max_distance_input = st.number_input(
+            "📍 Maximum Distance (km)",
+            min_value=0.1,
+            max_value=5.0,
+            value=2.0,
+            step=0.1,
+            help="Enter maximum distance willing to travel"
+        )
+
+        search_query = st.text_input(
+            "🔎 Search Dish Name (Optional)",
+            placeholder="e.g. Biryani, Dosa, Pizza...",
+            help="Type to search for specific dishes"
+        )
+
+        sort_by = st.selectbox(
+            "🔃 Sort Results By",
+            ["Best Match", "Price (Low to High)", "Price (High to Low)", "Rating (High to Low)", "Distance (Nearest)"]
+        )
+
+        # Submit Button
+        submitted = st.form_submit_button(
+            "🔍 FIND MEALS",
+            type="primary",
+            use_container_width=True
+        )
+
+        if submitted:
+            st.session_state.search_clicked = True
 
     st.markdown("---")
     st.markdown("### 📊 Quick Stats")
@@ -428,30 +456,12 @@ with st.sidebar:
     with col2:
         st.metric("🏪 Restaurants", df["Restaurant_Name"].nunique())
 
-    affordable = len(df[df["Price"] <= budget])
-    st.metric("✅ Within Budget", f"{affordable} dishes")
+# ===================== MAIN CONTENT =====================
+st.markdown('<p class="section-header">🔍 Your Meal Recommendations</p>', unsafe_allow_html=True)
 
-# ===================== MAIN TABS =====================
-tab1, tab2, tab3, tab4, tab5, tab6 = st.tabs([
-    "🔍 Find Meals",
-    "📊 Analytics",
-    "🤖 ML Similar",
-    "🏪 Compare",
-    "📈 Price Trends",
-    "⭐ Favorites"
-])
-
-# ===================== TAB 1: FIND MEALS =====================
-with tab1:
-    st.markdown('<p class="section-header">🔍 Find Your Perfect Meal</p>', unsafe_allow_html=True)
-
-    # Search by dish name
-    st.markdown('<div class="search-container">', unsafe_allow_html=True)
-    search_query = st.text_input("🔎 Search by dish name...", placeholder="e.g. Biryani, Dosa, Burger...")
-    st.markdown('</div>', unsafe_allow_html=True)
-
+if st.session_state.search_clicked:
     # Filter data
-    filtered = df[(df["Price"] <= budget) & (df["Distance_km"] <= max_distance)].copy()
+    filtered = df[(df["Price"] <= budget_input) & (df["Distance_km"] <= max_distance_input)].copy()
 
     if veg_pref != "Any":
         filtered = filtered[filtered["Veg_NonVeg"] == veg_pref]
@@ -470,7 +480,7 @@ with tab1:
     else:
         # Scoring
         filtered["rating_score"] = filtered["Rating"] / 5.0
-        filtered["price_score"] = 1 - (filtered["Price"] / budget)
+        filtered["price_score"] = 1 - (filtered["Price"] / budget_input)
         max_dist = filtered["Distance_km"].max()
         filtered["distance_score"] = 1 - (filtered["Distance_km"] / max_dist) if max_dist > 0 else 1
         filtered["final_score"] = (
@@ -491,12 +501,13 @@ with tab1:
         else:
             filtered = filtered.sort_values("final_score", ascending=False)
 
-        top_5 = filtered.head(5).reset_index(drop=True)
+        # Show top 20
+        top_results = filtered.head(20).reset_index(drop=True)
 
         # Stats row
         col1, col2, col3, col4 = st.columns(4)
         stats = [
-            (len(filtered), "🍽️ Matches Found"),
+            (len(filtered), "🍽️ Total Matches"),
             (f"Rs.{filtered['Price'].min()}", "💰 Lowest Price"),
             (f"⭐{filtered['Rating'].max():.1f}", "🏆 Best Rating"),
             (f"{filtered['Distance_km'].min():.1f}km", "📍 Nearest"),
@@ -511,10 +522,10 @@ with tab1:
                 """, unsafe_allow_html=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.success(f"✅ Showing Top {len(top_5)} Recommendations for you!")
+        st.success(f"✅ Showing Top {len(top_results)} Recommendations for you!")
 
         # Dish cards
-        for idx, row in top_5.iterrows():
+        for idx, row in top_results.iterrows():
             veg_class = "tag-veg" if row['Veg_NonVeg'] == 'Veg' else "tag-nonveg"
             veg_icon = "🟢" if row['Veg_NonVeg'] == 'Veg' else "🔴"
 
@@ -571,215 +582,32 @@ with tab1:
                 else:
                     st.info("Already in favorites!")
 
-# ===================== TAB 2: ANALYTICS =====================
-with tab2:
-    st.markdown('<p class="section-header">📊 Data Analytics & Insights</p>', unsafe_allow_html=True)
-
-    col1, col2 = st.columns(2)
+else:
+    st.info("👆 Fill in your preferences in the sidebar and click **'FIND MEALS'** to see recommendations!")
+    
+    # Show some sample stats
+    col1, col2, col3 = st.columns(3)
     with col1:
-        fig1 = px.histogram(df, x="Price", nbins=15, title="💰 Price Distribution",
-                           color_discrete_sequence=["#FF6B6B"])
-        fig1.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig1, use_container_width=True)
-
-        cuisine_counts = df["Cuisine"].value_counts()
-        fig3 = px.bar(x=cuisine_counts.index, y=cuisine_counts.values,
-                     title="🍜 Dishes by Cuisine",
-                     color=cuisine_counts.values,
-                     color_continuous_scale="Oranges")
-        fig3.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig3, use_container_width=True)
-
-    with col2:
-        veg_counts = df["Veg_NonVeg"].value_counts()
-        fig2 = px.pie(values=veg_counts.values, names=veg_counts.index,
-                     title="🥗 Veg vs Non-Veg",
-                     color_discrete_sequence=["#90EE90", "#FF6B6B"],
-                     hole=0.4)
-        fig2.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig2, use_container_width=True)
-
-        fig4 = px.scatter(df, x="Price", y="Rating", color="Veg_NonVeg",
-                         size="Distance_km",
-                         hover_data=["Dish_Name", "Restaurant_Name"],
-                         title="💹 Price vs Rating",
-                         color_discrete_map={"Veg": "#90EE90", "Non-Veg": "#FF6B6B"})
-        fig4.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig4, use_container_width=True)
-
-    restaurant_ratings = df.groupby("Restaurant_Name")["Rating"].mean().sort_values(ascending=False)
-    fig5 = px.bar(x=restaurant_ratings.index, y=restaurant_ratings.values,
-                 title="🏆 Top Rated Restaurants",
-                 color=restaurant_ratings.values,
-                 color_continuous_scale="RdYlGn")
-    fig5.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig5, use_container_width=True)
-
-# ===================== TAB 3: ML SIMILAR =====================
-with tab3:
-    st.markdown('<p class="section-header">🤖 ML-Powered Similar Dish Finder</p>', unsafe_allow_html=True)
-    st.write("Using **TF-IDF Vectorization** and **Cosine Similarity** to find similar dishes!")
-
-    selected_dish = st.selectbox("🍽️ Select a dish you like:", sorted(df["Dish_Name"].unique()))
-    sim_budget = st.slider("💰 Budget for similar dishes", 30, 300, 150)
-
-    if st.button("🔍 Find Similar Dishes", type="primary"):
-        idx = df[df["Dish_Name"] == selected_dish].index[0]
-        sim_scores = sorted(enumerate(cosine_sim[idx]), key=lambda x: x[1], reverse=True)[1:11]
-        similar_indices = [i[0] for i in sim_scores]
-        similarity_scores = [i[1] for i in sim_scores]
-        similar_dishes = df.iloc[similar_indices].copy()
-        similar_dishes = similar_dishes[similar_dishes["Price"] <= sim_budget]
-        similar_dishes["Similarity"] = similarity_scores[:len(similar_dishes)]
-
-        if len(similar_dishes) > 0:
-            st.success(f"✅ Found {len(similar_dishes)} similar dishes!")
-            for i, (_, row) in enumerate(similar_dishes.head(5).iterrows()):
-                pct = row['Similarity'] * 100
-                veg_icon = "🟢" if row['Veg_NonVeg'] == 'Veg' else "🔴"
-                st.markdown(f"""
-                <div class="dish-card">
-                    <div class="dish-rank">{i+1}</div>
-                    <div class="dish-name">{veg_icon} {row['Dish_Name']}</div>
-                    <div class="dish-restaurant">🏪 {row['Restaurant_Name']} | {row['Cuisine']}</div>
-                    <div class="dish-metrics">
-                        <div class="metric-item">
-                            <div class="metric-value">Rs.{row['Price']}</div>
-                            <div class="metric-label">💰 PRICE</div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-value">⭐{row['Rating']}</div>
-                            <div class="metric-label">RATING</div>
-                        </div>
-                        <div class="metric-item">
-                            <div class="metric-value">{pct:.0f}%</div>
-                            <div class="metric-label">🎯 MATCH</div>
-                        </div>
-                    </div>
-                </div>
-                """, unsafe_allow_html=True)
-        else:
-            st.warning("No similar dishes found within budget!")
-
-# ===================== TAB 4: COMPARE =====================
-with tab4:
-    st.markdown('<p class="section-header">🏪 Restaurant Comparison</p>', unsafe_allow_html=True)
-
-    restaurants = sorted(df["Restaurant_Name"].unique().tolist())
-    col1, col2 = st.columns(2)
-    with col1:
-        r1 = st.selectbox("Select Restaurant 1:", restaurants)
-    with col2:
-        r2 = st.selectbox("Select Restaurant 2:", [r for r in restaurants if r != r1])
-
-    if st.button("⚡ Compare Now!", type="primary"):
-        r1_data = df[df["Restaurant_Name"] == r1]
-        r2_data = df[df["Restaurant_Name"] == r2]
-
-        col1, col2 = st.columns(2)
-        for col, name, data, color in [(col1, r1, r1_data, "#FF6B6B"), (col2, r2, r2_data, "#667eea")]:
-            with col:
-                st.markdown(f"""
-                <div style='background: {card_bg}; border-radius: 20px; padding: 25px;
-                            box-shadow: 0 10px 30px rgba(0,0,0,0.1); border-top: 4px solid {color};'>
-                    <h3 style='color: {color}; margin: 0 0 15px;'>📍 {name}</h3>
-                </div>
-                """, unsafe_allow_html=True)
-                st.metric("Total Dishes", len(data))
-                st.metric("Avg Price", f"Rs.{data['Price'].mean():.0f}")
-                st.metric("Avg Rating", f"⭐{data['Rating'].mean():.2f}")
-                st.metric("Price Range", f"Rs.{data['Price'].min()}-{data['Price'].max()}")
-                veg = len(data[data["Veg_NonVeg"] == "Veg"])
-                st.metric("Veg Options", f"{veg}/{len(data)}")
-
-        fig = go.Figure()
-        categories = ['Avg Price', 'Avg Rating ×20', 'Menu Size ×5']
-        r1_vals = [r1_data['Price'].mean(), r1_data['Rating'].mean()*20, len(r1_data)*5]
-        r2_vals = [r2_data['Price'].mean(), r2_data['Rating'].mean()*20, len(r2_data)*5]
-        fig.add_trace(go.Bar(name=r1, x=categories, y=r1_vals, marker_color='#FF6B6B'))
-        fig.add_trace(go.Bar(name=r2, x=categories, y=r2_vals, marker_color='#667eea'))
-        fig.update_layout(title="📊 Side-by-Side Comparison", barmode='group',
-                         plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig, use_container_width=True)
-
-# ===================== TAB 5: PRICE TRENDS =====================
-with tab5:
-    st.markdown('<p class="section-header">📈 Price Trend Analysis</p>', unsafe_allow_html=True)
-
-    cuisine_prices = df.groupby("Cuisine")["Price"].mean().sort_values()
-    fig1 = px.bar(x=cuisine_prices.values, y=cuisine_prices.index, orientation='h',
-                 title="💰 Most Affordable Cuisines",
-                 color=cuisine_prices.values, color_continuous_scale="RdYlGn_r")
-    fig1.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-    st.plotly_chart(fig1, use_container_width=True)
-
-    col1, col2 = st.columns(2)
-    with col1:
-        fig2 = px.box(df, x="Veg_NonVeg", y="Price", color="Veg_NonVeg",
-                     title="🥗 Price: Veg vs Non-Veg",
-                     color_discrete_map={"Veg": "#90EE90", "Non-Veg": "#FF6B6B"})
-        fig2.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig2, use_container_width=True)
-
-    with col2:
-        df_val = df.copy()
-        df_val["Value_Score"] = (df_val["Rating"] / 5.0) / (df_val["Price"] / df_val["Price"].max())
-        best_val = df_val.nlargest(10, "Value_Score")
-        fig3 = px.scatter(best_val, x="Price", y="Rating", size="Value_Score",
-                         hover_data=["Dish_Name", "Restaurant_Name"],
-                         title="💎 Best Value Dishes",
-                         color="Value_Score", color_continuous_scale="Viridis")
-        fig3.update_layout(plot_bgcolor='rgba(0,0,0,0)', paper_bgcolor='rgba(0,0,0,0)')
-        st.plotly_chart(fig3, use_container_width=True)
-
-# ===================== TAB 6: FAVORITES =====================
-with tab6:
-    st.markdown('<p class="section-header">⭐ My Favorite Dishes</p>', unsafe_allow_html=True)
-
-    if len(st.session_state.favorites) == 0:
-        st.markdown("""
-        <div class="no-results">
-            <h2>💔 No favorites yet!</h2>
-            <p>Go to 'Find Meals' and save dishes you love!</p>
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stats-number">{len(df)}</div>
+            <div class="stats-label">🍽️ Total Dishes</div>
         </div>
         """, unsafe_allow_html=True)
-    else:
-        st.success(f"✅ You have {len(st.session_state.favorites)} favorite dishes!")
-
-        total_cost = sum([f['price'] for f in st.session_state.favorites])
-        avg_rating = sum([f['rating'] for f in st.session_state.favorites]) / len(st.session_state.favorites)
-
-        col1, col2, col3 = st.columns(3)
-        with col1:
-            st.markdown(f'<div class="stats-card"><div class="stats-number">{len(st.session_state.favorites)}</div><div class="stats-label">❤️ Saved Dishes</div></div>', unsafe_allow_html=True)
-        with col2:
-            st.markdown(f'<div class="stats-card"><div class="stats-number">Rs.{total_cost}</div><div class="stats-label">💰 Total Cost</div></div>', unsafe_allow_html=True)
-        with col3:
-            st.markdown(f'<div class="stats-card"><div class="stats-number">⭐{avg_rating:.1f}</div><div class="stats-label">🏆 Avg Rating</div></div>', unsafe_allow_html=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        for idx, fav in enumerate(st.session_state.favorites):
-            veg_icon = "🟢" if fav.get('cuisine', '') != 'Non-Veg' else "🔴"
-            st.markdown(f"""
-            <div class="dish-card">
-                <div class="dish-name">{veg_icon} {fav['dish']}</div>
-                <div class="dish-restaurant">🏪 {fav['restaurant']}</div>
-                <div class="dish-metrics">
-                    <div class="metric-item">
-                        <div class="metric-value">Rs.{fav['price']}</div>
-                        <div class="metric-label">💰 PRICE</div>
-                    </div>
-                    <div class="metric-item">
-                        <div class="metric-value">⭐{fav['rating']}</div>
-                        <div class="metric-label">RATING</div>
-                    </div>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            if st.button("🗑️ Remove", key=f"remove_{idx}"):
-                st.session_state.favorites.pop(idx)
-                st.rerun()
+    with col2:
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stats-number">{df['Restaurant_Name'].nunique()}</div>
+            <div class="stats-label">🏪 Restaurants</div>
+        </div>
+        """, unsafe_allow_html=True)
+    with col3:
+        st.markdown(f"""
+        <div class="stats-card">
+            <div class="stats-number">⭐{df['Rating'].mean():.1f}</div>
+            <div class="stats-label">Avg Rating</div>
+        </div>
+        """, unsafe_allow_html=True)
 
 # ===================== FOOTER =====================
 st.markdown("""
