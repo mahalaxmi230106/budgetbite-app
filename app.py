@@ -1,11 +1,11 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
-import plotly.graph_objects as go
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.metrics.pairwise import cosine_similarity
 import urllib.parse
 import math
+from streamlit.components.v1 import html
 
 # ===================== PAGE CONFIG =====================
 st.set_page_config(
@@ -26,32 +26,103 @@ if 'user_location' not in st.session_state:
 # ===================== CALCULATE DISTANCE =====================
 def calculate_distance(lat1, lon1, lat2, lon2):
     """Calculate distance between two points using Haversine formula"""
-    R = 6371  # Earth's radius in kilometers
-    
+    R = 6371
     dlat = math.radians(lat2 - lat1)
     dlon = math.radians(lon2 - lon1)
-    
-    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * \
-        math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
+    a = math.sin(dlat/2)**2 + math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) * math.sin(dlon/2)**2
     c = 2 * math.asin(math.sqrt(a))
-    
     return R * c
+
+# ===================== AUTO-DETECT LOCATION =====================
+def get_user_location():
+    """JavaScript to get user's GPS location"""
+    location_script = """
+    <script>
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+            alert("Geolocation is not supported by this browser.");
+        }
+    }
+    
+    function showPosition(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        
+        // Send location to Streamlit
+        window.parent.postMessage({
+            type: 'streamlit:setComponentValue',
+            value: {latitude: lat, longitude: lon}
+        }, '*');
+        
+        // Also update the display
+        document.getElementById('location-status').innerHTML = 
+            '<div style="background: #28a745; color: white; padding: 15px; border-radius: 10px; text-align: center;">' +
+            '<strong>✅ Location Detected!</strong><br>' +
+            'Lat: ' + lat.toFixed(4) + ', Lon: ' + lon.toFixed(4) +
+            '</div>';
+    }
+    
+    function showError(error) {
+        let msg = '';
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                msg = "Please allow location access in your browser settings.";
+                break;
+            case error.POSITION_UNAVAILABLE:
+                msg = "Location information is unavailable.";
+                break;
+            case error.TIMEOUT:
+                msg = "Location request timed out.";
+                break;
+            default:
+                msg = "An unknown error occurred.";
+        }
+        document.getElementById('location-status').innerHTML = 
+            '<div style="background: #dc3545; color: white; padding: 15px; border-radius: 10px; text-align: center;">' +
+            '❌ ' + msg +
+            '</div>';
+    }
+    
+    // Auto-detect on load
+    getLocation();
+    </script>
+    
+    <div id="location-status" style="margin: 20px 0;">
+        <div style="background: #17a2b8; color: white; padding: 15px; border-radius: 10px; text-align: center;">
+            📍 Detecting your location...
+        </div>
+    </div>
+    <button onclick="getLocation()" style="
+        background: linear-gradient(135deg, #667eea, #764ba2);
+        color: white;
+        padding: 15px 30px;
+        border: none;
+        border-radius: 50px;
+        font-weight: 700;
+        font-size: 1rem;
+        cursor: pointer;
+        width: 100%;
+        box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    ">
+        🔄 Refresh Location
+    </button>
+    """
+    return location_script
 
 # ===================== PROFESSIONAL CSS =====================
 st.markdown("""
 <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
     
-    * {
-        font-family: 'Inter', sans-serif !important;
-    }
+    * { font-family: 'Inter', sans-serif !important; }
     
     .stApp {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         background-attachment: fixed;
     }
     
-    /* MODERN HEADER */
     .modern-header {
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         padding: 60px 40px;
@@ -91,20 +162,8 @@ st.markdown("""
         font-weight: 600;
         font-size: 0.9rem;
         border: 1px solid rgba(255, 255, 255, 0.3);
-        backdrop-filter: blur(10px);
     }
     
-    /* LOCATION INFO */
-    .location-info {
-        background: linear-gradient(135deg, #667eea, #764ba2);
-        color: white;
-        padding: 20px;
-        border-radius: 15px;
-        margin: 15px 0;
-        font-weight: 600;
-    }
-    
-    /* SIDEBAR STYLING */
     section[data-testid="stSidebar"] {
         background: rgba(255, 255, 255, 0.95);
         backdrop-filter: blur(10px);
@@ -118,18 +177,6 @@ st.markdown("""
         margin-bottom: 25px;
         color: white;
     }
-    
-    .sidebar-title {
-        font-size: 1.8rem;
-        font-weight: 900;
-        margin: 0;
-    }
-    
-    .sidebar-subtitle {
-        font-size: 0.9rem;
-        margin-top: 8px;
-        opacity: 0.95;
-    }
 </style>
 """, unsafe_allow_html=True)
 
@@ -137,7 +184,6 @@ st.markdown("""
 @st.cache_data
 def load_data():
     df = pd.read_csv("meal_data.csv")
-    # Add GPS coordinates for restaurants
     restaurant_coords = {
         'Hotel Shadab': (17.4435, 78.4728),
         'Paradise Restaurant': (17.4402, 78.4483),
@@ -154,10 +200,8 @@ def load_data():
         'Andhra Spice': (17.4398, 78.4812),
         'Wrap and Roll': (17.4287, 78.4593),
     }
-    
     df['Latitude'] = df['Restaurant_Name'].map(lambda x: restaurant_coords.get(x, (17.4400, 78.4800))[0])
     df['Longitude'] = df['Restaurant_Name'].map(lambda x: restaurant_coords.get(x, (17.4400, 78.4800))[1])
-    
     return df
 
 df = load_data()
@@ -166,11 +210,7 @@ df = load_data()
 @st.cache_resource
 def build_ml_model(df):
     df_copy = df.copy()
-    df_copy["combined_features"] = (
-        df_copy["Cuisine"] + " " +
-        df_copy["Veg_NonVeg"] + " " +
-        df_copy["Dish_Name"]
-    )
+    df_copy["combined_features"] = df_copy["Cuisine"] + " " + df_copy["Veg_NonVeg"] + " " + df_copy["Dish_Name"]
     tfidf = TfidfVectorizer(stop_words="english")
     tfidf_matrix = tfidf.fit_transform(df_copy["combined_features"])
     cosine_sim = cosine_similarity(tfidf_matrix, tfidf_matrix)
@@ -185,10 +225,9 @@ st.markdown("""
     <p class="header-subtitle">AI-Powered Meal Discovery with GPS Navigation</p>
     <div class="feature-badges">
         <span class="feature-badge">🤖 ML Powered</span>
-        <span class="feature-badge">📍 GPS Enabled</span>
+        <span class="feature-badge">📍 Auto GPS</span>
         <span class="feature-badge">🗺️ Live Directions</span>
         <span class="feature-badge">💰 Budget First</span>
-        <span class="feature-badge">⚡ Real-time</span>
     </div>
 </div>
 """, unsafe_allow_html=True)
@@ -197,50 +236,40 @@ st.markdown("""
 with st.sidebar:
     st.markdown("""
     <div class="sidebar-header">
-        <h2 class="sidebar-title">🍽️ BudgetBite</h2>
-        <p class="sidebar-subtitle">Smart Meal Discovery</p>
+        <h2 style='margin: 0; font-size: 1.8rem; font-weight: 900;'>🍽️ BudgetBite</h2>
+        <p style='margin: 5px 0 0; font-size: 0.9rem;'>Smart Meal Discovery</p>
     </div>
     """, unsafe_allow_html=True)
     
-    # GPS LOCATION
-    st.markdown("### 📍 Your Location")
+    # AUTO GPS DETECTION
+    st.markdown("### 📍 Auto-Detect Location")
+    
+    # Embed GPS detection script
+    html(get_user_location(), height=150)
+    
+    st.info("💡 **Or enter manually:**")
     
     col1, col2 = st.columns(2)
     with col1:
-        user_lat = st.number_input("Latitude", value=17.4400, format="%.4f", step=0.0001)
+        user_lat = st.number_input("Latitude", value=17.4400, format="%.4f", step=0.0001, key="lat")
     with col2:
-        user_lon = st.number_input("Longitude", value=78.4800, format="%.4f", step=0.0001)
+        user_lon = st.number_input("Longitude", value=78.4800, format="%.4f", step=0.0001, key="lon")
     
-    st.session_state.user_location = (user_lat, user_lon)
-    
-    st.markdown(f"""
-    <div class="location-info">
-        📍 Current Location:<br>
-        Lat: {user_lat:.4f}, Lon: {user_lon:.4f}
-    </div>
-    """, unsafe_allow_html=True)
-    
-    st.info("💡 **Tip:** Enter your GPS coordinates for accurate results!")
+    if user_lat and user_lon:
+        st.session_state.user_location = (user_lat, user_lon)
     
     st.markdown("---")
     st.markdown("### 🔍 Search Preferences")
     
-    # Search Form
     with st.form("search_form"):
         budget = st.number_input("💰 Budget (Rs.)", 20, 500, 100, 10)
         veg_pref = st.selectbox("🥗 Diet", ["Any", "Veg", "Non-Veg"])
         cuisine_pref = st.selectbox("🍜 Cuisine", ["Any"] + sorted(df["Cuisine"].unique().tolist()))
         max_dist = st.number_input("📍 Max Distance (km)", 0.1, 10.0, 3.0, 0.1)
         search_query = st.text_input("🔎 Search Dish", placeholder="e.g. Biryani...")
-        sort_by = st.selectbox("🔃 Sort By", [
-            "Nearest First",
-            "Best Match",
-            "Price (Low to High)",
-            "Rating (High to Low)"
-        ])
+        sort_by = st.selectbox("🔃 Sort By", ["Nearest First", "Best Match", "Price (Low to High)", "Rating (High to Low)"])
         
         submitted = st.form_submit_button("🔍 FIND MEALS", type="primary", use_container_width=True)
-        
         if submitted:
             st.session_state.search_clicked = True
 
@@ -255,13 +284,10 @@ with st.sidebar:
 if st.session_state.search_clicked and st.session_state.user_location:
     user_lat, user_lon = st.session_state.user_location
     
-    # Calculate actual distances
     df['Actual_Distance'] = df.apply(
-        lambda row: calculate_distance(user_lat, user_lon, row['Latitude'], row['Longitude']),
-        axis=1
+        lambda row: calculate_distance(user_lat, user_lon, row['Latitude'], row['Longitude']), axis=1
     )
     
-    # Filter
     filtered = df[df['Actual_Distance'] <= max_dist].copy()
     filtered = filtered[filtered['Price'] <= budget]
     
@@ -275,18 +301,14 @@ if st.session_state.search_clicked and st.session_state.user_location:
     if len(filtered) == 0:
         st.error("😞 No meals found nearby! Try increasing your distance or adjusting filters.")
     else:
-        # Scoring
         filtered["rating_score"] = filtered["Rating"] / 5.0
         filtered["price_score"] = 1 - (filtered["Price"] / budget)
         max_distance = filtered["Actual_Distance"].max()
         filtered["distance_score"] = 1 - (filtered["Actual_Distance"] / max_distance) if max_distance > 0 else 1
         filtered["final_score"] = (
-            filtered["rating_score"] * 0.4 +
-            filtered["price_score"] * 0.3 +
-            filtered["distance_score"] * 0.3
+            filtered["rating_score"] * 0.4 + filtered["price_score"] * 0.3 + filtered["distance_score"] * 0.3
         )
         
-        # Sort
         if sort_by == "Nearest First":
             filtered = filtered.sort_values("Actual_Distance", ascending=True)
         elif sort_by == "Price (Low to High)":
@@ -298,7 +320,6 @@ if st.session_state.search_clicked and st.session_state.user_location:
         
         top_results = filtered.head(20).reset_index(drop=True)
         
-        # Stats
         col1, col2, col3, col4 = st.columns(4)
         with col1:
             st.metric("🍽️ Total Matches", len(filtered))
@@ -312,18 +333,13 @@ if st.session_state.search_clicked and st.session_state.user_location:
         st.success(f"✅ Found {len(top_results)} meals near you!")
         st.markdown("---")
         
-        # Display results using Streamlit components
         for idx, row in top_results.iterrows():
             veg_icon = "🟢" if row['Veg_NonVeg'] == 'Veg' else "🔴"
             
-            # Directions URL
             directions_url = f"https://www.google.com/maps/dir/?api=1&origin={user_lat},{user_lon}&destination={row['Latitude']},{row['Longitude']}&travelmode=driving"
-            
-            # WhatsApp
             msg = f"🍽️ Found on BudgetBite!\n\n*{row['Dish_Name']}*\n🏪 {row['Restaurant_Name']}\n💰 Rs.{row['Price']}\n⭐ {row['Rating']}\n📍 {row['Actual_Distance']:.1f}km away"
             whatsapp_url = f"https://wa.me/?text={urllib.parse.quote(msg)}"
             
-            # Create card using columns
             with st.container():
                 st.markdown(f"### {idx+1}. {veg_icon} {row['Dish_Name']}")
                 st.caption(f"🏪 **{row['Restaurant_Name']}** | {row['Veg_NonVeg']} | {row['Cuisine']}")
@@ -342,12 +358,11 @@ if st.session_state.search_clicked and st.session_state.user_location:
                 with col1:
                     st.link_button("🗺️ GET DIRECTIONS", directions_url, use_container_width=True)
                 with col2:
-                    st.link_button("📱 SHARE ON WHATSAPP", whatsapp_url, use_container_width=True)
-                
+                    st.link_button("📱 SHARE", whatsapp_url, use_container_width=True)
                 st.markdown("---")
 
 else:
-    st.info("👆 Enter your GPS location and preferences in the sidebar, then click **'FIND MEALS'**!")
+    st.info("👆 Allow location access or enter coordinates in the sidebar, then click **'FIND MEALS'**!")
     
     col1, col2, col3, col4 = st.columns(4)
     with col1:
@@ -359,14 +374,11 @@ else:
     with col4:
         st.metric("💰 Avg Price", f"Rs.{int(df['Price'].mean())}")
 
-# ===================== FOOTER =====================
 st.markdown("---")
 st.markdown("""
-<div style='text-align: center; padding: 40px; margin-top: 50px;
-            background: linear-gradient(135deg, #667eea, #764ba2);
+<div style='text-align: center; padding: 40px; background: linear-gradient(135deg, #667eea, #764ba2);
             border-radius: 25px; color: white;'>
     <h2 style='margin: 0; font-size: 2rem; font-weight: 900;'>🍽️ BudgetBite Pro</h2>
-    <p style='margin: 15px 0 0; font-size: 1.1rem; opacity: 0.95;'>AI-Powered Meal Discovery with GPS Navigation</p>
-    <p style='margin: 10px 0 0; opacity: 0.85;'>TF-IDF ML | Real-time GPS | Smart Recommendations</p>
+    <p style='margin: 15px 0 0; font-size: 1.1rem;'>AI-Powered Meal Discovery with Auto GPS</p>
 </div>
 """, unsafe_allow_html=True)
